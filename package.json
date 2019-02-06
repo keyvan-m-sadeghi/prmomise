@@ -1,0 +1,28 @@
+{
+  "name": "prmomise",
+  "version": "0.0.1",
+  "description": "What is a Promise in JavaScript?",
+  "main": "index.js",
+  "scripts": {
+    "test": "ava"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/keyvan-m-sadeghi/prmomise.git"
+  },
+  "keywords": [
+    "Promise",
+    "js",
+    "node",
+    "browser"
+  ],
+  "author": "Keyvan M. Sadeghi <keyvan.m.sadeghi@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/keyvan-m-sadeghi/prmomise/issues"
+  },
+  "homepage": "https://github.com/keyvan-m-sadeghi/prmomise#readme",
+  "devDependencies": {
+    "ava": "^1.2.1"
+  }
+}
