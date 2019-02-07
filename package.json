@@ -4,7 +4,8 @@
   "description": "What is a Promise in JavaScript?",
   "main": "index.js",
   "scripts": {
-    "test": "ava --verbose"
+    "lint": "xo",
+    "test": "ava --verbose && npm run lint"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,8 @@
   },
   "homepage": "https://github.com/keyvan-m-sadeghi/prmomise#readme",
   "devDependencies": {
-    "ava": "^1.2.1"
+    "async-counter": "^1.0.0",
+    "ava": "^1.2.1",
+    "xo": "^0.24.0"
   }
 }

@@ -1,63 +1,77 @@
 import test from 'ava';
-import {Prmomise, states} from './'
+import {asyncCounter} from 'async-counter';
+import {Nancy, states} from '.';
 
 test('empty executor results in a pending promise', t => {
-    const p = new Prmomise(() => {});
-    t.is(p.state, states.pending);
+	const p = new Nancy(() => {});
+	t.is(p.state, states.pending);
 });
 
 test('simple resolve works', t => {
-    const p = new Prmomise(resolve => resolve(2));
-    t.is(p.state, states.resolved);
-    t.is(p.value, 2);
+	const p = Nancy.resolve(42);
+	t.is(p.state, states.resolved);
+	t.is(p.value, 42);
 });
 
 test('simple reject works', t => {
-    const p = new Prmomise((resolve, reject) => reject(2));
-    t.is(p.state, states.rejected);
-    t.is(p.value, 2);
+	const p = Nancy.reject(42);
+	t.is(p.state, states.rejected);
+	t.is(p.value, 42);
 });
 
-test('error thrown during execution results in a rejected promise', t => {
-    const p = new Prmomise(resolve => {
-        throw new Error('Something went wrong...');
-        resolve(2);
-    });
-    t.is(p.state, states.rejected);
+test('error thrown during resolve execution results in a rejected promise', t => {
+	const p = new Nancy(() => {
+		throw new Error('Something went wrong...');
+	});
+	t.is(p.state, states.rejected);
 });
 
-const delay = () => new Prmomise(resolve => {
-    setTimeout(resolve, 500);
-    return t;
+test.cb('chain then sync', t => {
+	Nancy.resolve(0)
+		.then(value => {
+			t.is(value, 0);
+			return 1;
+		})
+		.then(value => {
+			t.is(value, 1);
+			return 2;
+		})
+		.then(value => {
+			t.is(value, 2);
+			t.end();
+		});
 });
+
+test.cb('chain catch sync', t => {
+	Nancy.reject(42)
+		.catch(error => error)
+		.then(value => t.is(value, 42))
+		.then(() => t.end());
+});
+
+const delay = () => new Nancy(resolve => setTimeout(resolve, 500));
 
 test.cb('multiple then on single promise', t => {
-    const p = delay();
-    p.then(() => console.log('1st then on promise!'));
-    p.then(() => console.log('2nd then on promise!'));
-    p.then(() => console.log('3rd then on promise!'));
-    p.then(delay).then(t.end());
+	const counter = asyncCounter(4, {onFinished: () => t.end()});
+	const p = Nancy.resolve();
+	p.then(counter.count);
+	p.then(counter.count);
+	p.then(counter.count);
+	p.then(delay).then(counter.count);
 });
 
-test.cb('can chain then async', t => {
-    delay()
-        .then(delay)
-        .then(delay)
-        .then(() => t.end())
+test.cb('multiple catch on single promise', t => {
+	const counter = asyncCounter(4, {onFinished: () => t.end()});
+	const p = Nancy.reject();
+	p.catch(counter.count);
+	p.catch(counter.count);
+	p.catch(counter.count);
+	p.catch(delay).then(counter.count);
 });
 
-test.cb('can chain then sync', t => {
-    new Prmomise(resolve => resolve(2))
-        .then(value => {
-            t.is(value, 2);
-            return 3;
-        })
-        .then(value => {
-            t.is(value, 3);
-            return 4;
-        })
-        .then(value => {
-            t.is(value, 4);
-            t.end();
-        });
+test.cb('chain then async', t => {
+	delay()
+		.then(delay)
+		.then(delay)
+		.then(() => t.end());
 });
