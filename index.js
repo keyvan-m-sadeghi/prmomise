@@ -11,7 +11,12 @@ class Prmomise {
             this.value = value;
             this.state = state;
         };
-        executor(getCallback(states.resolved), getCallback(states.rejected));        
+    
+        try {
+            executor(getCallback(states.resolved), getCallback(states.rejected));
+        } catch (error) {
+            getCallback(states.rejected)(error);
+        }
     }
 }
 

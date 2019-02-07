@@ -17,3 +17,11 @@ test('simple reject works', t => {
     t.is(p.state, states.rejected);
     t.is(p.value, 2);
 });
+
+test('error thrown during execution results in a rejected promise', t => {
+    const p = new Prmomise(resolve => {
+        throw new Error('Something went wrong...');
+        resolve(2);
+    });
+    t.is(p.state, states.rejected);
+});
