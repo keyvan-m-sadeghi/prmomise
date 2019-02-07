@@ -45,3 +45,19 @@ test.cb('can chain then async', t => {
         .then(delay)
         .then(() => t.end())
 });
+
+test.cb('can chain then sync', t => {
+    new Prmomise(resolve => resolve(2))
+        .then(value => {
+            t.is(value, 2);
+            return 3;
+        })
+        .then(value => {
+            t.is(value, 3);
+            return 4;
+        })
+        .then(value => {
+            t.is(value, 4);
+            t.end();
+        });
+});

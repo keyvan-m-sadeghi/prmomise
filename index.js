@@ -27,6 +27,9 @@ class Prmomise {
     }
 
     then(onFulfilled) {
+        if (this.state == states.resolved) {
+            return new Promise(resolve => resolve(onFulfilled(this.value)));
+        }
         return new Promise(resolve => {
             this.trailingInvocations[states.resolved].push([resolve, onFulfilled])
         });
