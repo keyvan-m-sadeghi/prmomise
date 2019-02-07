@@ -25,3 +25,23 @@ test('error thrown during execution results in a rejected promise', t => {
     });
     t.is(p.state, states.rejected);
 });
+
+const delay = () => new Prmomise(resolve => {
+    setTimeout(resolve, 500);
+    return t;
+});
+
+test.cb('multiple then on single promise', t => {
+    const p = delay();
+    p.then(() => console.log('1st then on promise!'));
+    p.then(() => console.log('2nd then on promise!'));
+    p.then(() => console.log('3rd then on promise!'));
+    p.then(delay).then(t.end());
+});
+
+test.cb('can chain then async', t => {
+    delay()
+        .then(delay)
+        .then(delay)
+        .then(() => t.end())
+});

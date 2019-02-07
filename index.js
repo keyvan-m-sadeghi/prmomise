@@ -7,9 +7,16 @@ const states = {
 class Prmomise {
     constructor(executor) {
         this.state = states.pending;
+        this.trailingInvocations = {
+            [states.resolved]: [],
+            [states.rejected]: []
+        };
         const getCallback = state => value => {
             this.value = value;
             this.state = state;
+            for (const [cachedCallback, trailingInvocation] of this.trailingInvocations[state]) {
+                cachedCallback(trailingInvocation(this.value));
+            }
         };
     
         try {
@@ -17,6 +24,12 @@ class Prmomise {
         } catch (error) {
             getCallback(states.rejected)(error);
         }
+    }
+
+    then(onFulfilled) {
+        return new Promise(resolve => {
+            this.trailingInvocations[states.resolved].push([resolve, onFulfilled])
+        });
     }
 }
 
