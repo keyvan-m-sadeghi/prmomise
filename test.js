@@ -69,7 +69,7 @@ test.cb('chain catch async', t => {
 		.then(() => Nancy.reject())
 		.catch(() => Nancy.reject())
 		.catch(() => 42)
-		// .catch(anything)
+		.catch(anything)
 		.then(value => t.is(value, 42))
 		.then(delay)
 		.then(() => t.end());
