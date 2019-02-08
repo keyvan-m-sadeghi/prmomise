@@ -6,14 +6,11 @@ const states = {
 
 class Nancy {
 	constructor(executor) {
-		const trailingInvocations = {
-			[states.resolved]: [],
-			[states.rejected]: []
-		};
-		const addTrailingInvocation = (state, cachedCallback, cachedHandler) => trailingInvocations[state]
+		const trailingInvocations = [];
+		const addTrailingInvocation = (cachedCallback, cachedHandler) => trailingInvocations
 			.push([cachedCallback, cachedHandler]);
-		const runTrailingInvocations = state => {
-			for (const [cachedCallback, cachedHandler] of trailingInvocations[state]) {
+		const runTrailingInvocations = () => {
+			for (const [cachedCallback, cachedHandler] of trailingInvocations) {
 				cachedCallback(cachedHandler(this.value));
 			}
 		};
@@ -31,8 +28,8 @@ class Nancy {
 			},
 			[states.pending]: {
 				state: states.pending,
-				then: onFulfilled => new Nancy(resolve => addTrailingInvocation(states.resolved, resolve, onFulfilled)),
-				catch: onRejected => new Nancy(resolve => addTrailingInvocation(states.rejected, resolve, onRejected))
+				then: onFulfilled => new Nancy(resolve => addTrailingInvocation(resolve, onFulfilled)),
+				catch: onRejected => new Nancy(resolve => addTrailingInvocation(resolve, onRejected))
 			}
 		};
 		const changeState = state => Object.assign(this, members[state]);
@@ -40,7 +37,7 @@ class Nancy {
 			const apply = (value, state) => {
 				this.value = value;
 				changeState(state);
-				runTrailingInvocations(state);
+				runTrailingInvocations();
 			};
 			if (value instanceof Nancy) {
 				value.then(value => apply(value, states.resolved));

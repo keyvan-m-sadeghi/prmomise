@@ -47,19 +47,17 @@ const anything = () => console.log('I can be anything because I never get called
 // test.cb('chain catch sync', t => {
 // 	Nancy.reject(42)
 // 		.catch(error => error)
-//		.catch(anything)
+// 		.catch(anything)
 // 		.then(value => t.is(value, 42))
 // 		.then(() => Nancy.reject(24))
-//		.then(() => anything)
+// 		.then(() => anything)
 // 		.catch(value => t.is(value, 24))
 // 		.then(() => t.end());
 // });
 
-const delay = () => {console.log('llllll');return new Nancy(resolve => setTimeout(resolve, 500));}
+const delay = () => new Nancy(resolve => setTimeout(resolve, 500));
 
 // test.cb('chain then async', t => {
-// 	debugger;
-// 	// Nancy.resolve(34)
 // 	delay()
 // 		.then(delay)
 // 		.then(delay)
@@ -68,7 +66,11 @@ const delay = () => {console.log('llllll');return new Nancy(resolve => setTimeou
 
 test.cb('chain catch async', t => {
 	delay()
-		.then(delay)
+		.then(() => Nancy.reject())
+		.catch(() => Nancy.reject())
+		.catch(() => 42)
+		// .catch(anything)
+		.then(value => t.is(value, 42))
 		.then(delay)
 		.then(() => t.end());
 });
