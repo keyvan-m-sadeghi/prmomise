@@ -52,10 +52,10 @@ test.cb('chain catch sync', t => {
 		.then(() => t.end());
 });
 
-const delay = (v) => new Nancy(resolve => setTimeout(resolve, 500)).then(()=>v);
+const delay = () => new Nancy(resolve => setTimeout(resolve, 500));
 
 test.cb('chain then async', t => {
-	debugger
+	// Debugger;
 	// Nancy.resolve(34)
 	delay()
 		.then(delay)
@@ -63,13 +63,13 @@ test.cb('chain then async', t => {
 		.then(() => t.end());
 });
 
-TODO
-test.cb('chain catch async', t => {
-	delay()
-		.then(delay)
-		.then(delay)
-		.then(() => t.end());
-});
+// TODO
+// test.cb('chain catch async', t => {
+// 	delay()
+// 		.then(delay)
+// 		.then(delay)
+// 		.then(() => t.end());
+// });
 
 test.cb('multiple then on single promise', t => {
 	const counter = asyncCounter(4, {onFinished: () => t.end()});
