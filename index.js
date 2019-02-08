@@ -6,19 +6,7 @@ const states = {
 
 class Nancy {
 	constructor(executor) {
-		const trailingInvocations = [];
-		const addTrailingInvocation = ({cachedCallback, cachedHandler, omitOn}) => trailingInvocations
-			.push({cachedCallback, cachedHandler, omitOn});
-		const runTrailingInvocations = () => {
-			for (const {cachedCallback, cachedHandler, omitOn} of trailingInvocations) {
-				if (omitOn === this.state) {
-					cachedCallback(this);
-				} else {
-					cachedCallback(cachedHandler(this.value));
-				}
-			}
-		};
-
+		const tailCalls = [];
 		const members = {
 			[states.resolved]: {
 				state: states.resolved,
@@ -32,16 +20,14 @@ class Nancy {
 			},
 			[states.pending]: {
 				state: states.pending,
-				then: onFulfilled => new Nancy(resolve => addTrailingInvocation({
-					cachedCallback: resolve,
-					cachedHandler: onFulfilled,
-					omitOn: states.rejected
+				then: onFulfilled => new Nancy(resolve => tailCalls.push({
+					[states.resolved]: () => resolve(onFulfilled(this.value)),
+					[states.rejected]: () => resolve(this)
 				})),
-				catch: onRejected => new Nancy(resolve => addTrailingInvocation({
-					cachedCallback: resolve,
-					cachedHandler: onRejected,
-					omitOn: states.resolved
-				}))
+				catch: onRejected => new Nancy(resolve => tailCalls.push({
+					[states.resolved]: () => resolve(this),
+					[states.rejected]: () => resolve(onRejected(this.value))
+				})),
 			}
 		};
 		const changeState = state => Object.assign(this, members[state]);
@@ -49,7 +35,9 @@ class Nancy {
 			const apply = (value, state) => {
 				this.value = value;
 				changeState(state);
-				runTrailingInvocations();
+				for (const tailCall of tailCalls) {
+					tailCall[state]();
+				}
 			};
 			if (value instanceof Nancy) {
 				value.then(value => apply(value, states.resolved));
