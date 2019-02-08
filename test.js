@@ -66,13 +66,12 @@ const delay = () => {console.log('llllll');return new Nancy(resolve => setTimeou
 // 		.then(() => t.end());
 // });
 
-// // TODO
-// // test.cb('chain catch async', t => {
-// // 	delay()
-// // 		.then(delay)
-// // 		.then(delay)
-// // 		.then(() => t.end());
-// // });
+test.cb('chain catch async', t => {
+	delay()
+		.then(delay)
+		.then(delay)
+		.then(() => t.end());
+});
 
 // test.cb('multiple then on single promise', t => {
 // 	const counter = asyncCounter(3, {onFinished: () => t.end()});
@@ -82,12 +81,12 @@ const delay = () => {console.log('llllll');return new Nancy(resolve => setTimeou
 // 	p.then(delay).then(counter.count);
 // });
 
-test.cb('multiple catch on single promise', t => {
-	const counter = asyncCounter(3, {onFinished: () => t.end()});
-	const p = delay()
-		.then(() => Nancy.reject());
-	p.then(anything)
-	p.catch(counter.count);
-	p.catch(counter.count);
-	p.catch(delay).then(counter.count);
-});
+// test.cb('multiple catch on single promise', t => {
+// 	const counter = asyncCounter(3, {onFinished: () => t.end()});
+// 	const p = delay()
+// 		.then(() => Nancy.reject());
+// 	p.then(anything)
+// 	p.catch(counter.count);
+// 	p.catch(counter.count);
+// 	p.catch(delay).then(counter.count);
+// });
