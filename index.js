@@ -4,17 +4,44 @@ const states = {
 	rejected: 'Rejected'
 };
 
-class Proxy {
-	constructor(value) {
+class NancyProxy {
+	constructor(state, value, trailingInvocations = []) {
+		this.state = state;
 		this.value = value;
-		const trailingInvocations = [];
-		this.addTrailingInvocation = (cachedCallback, cachedHandler) => trailingInvocations
-			.push([cachedCallback, cachedHandler]);
-		this.runTrailingInvocations = () => {
-			for (const [cachedCallback, cachedHandler] of trailingInvocations) {
-				cachedCallback(cachedHandler(value));
-			}
+		this.trailingInvocations = trailingInvocations;
+	}
+
+	addTrailingInvocation(cachedCallback, cachedHandler) {
+		this.trailingInvocations.push([cachedCallback, cachedHandler]);
+	}
+
+	runTrailingInvocations() {
+		for (const [cachedCallback, cachedHandler] of this.trailingInvocations) {
+			debugger
+			cachedCallback(cachedHandler(this.value));
 		}
+	}
+
+	then(onFulfilled) {
+		throw new Error('Not implemented');
+	}
+
+	catch(onRejected) {
+		throw new Error('Not implemented.');
+	}
+}
+
+class NancyProxyPending extends NancyProxy {
+	constructor() {
+		super(states.pending);
+	}
+
+	toResolved(value) {
+		return new NancyProxyResolved(value, this.trailingInvocations);
+	}
+
+	toRejected(value) {
+		return new NancyProxyRejected(value, this.trailingInvocations);
 	}
 
 	then(onFulfilled) {
@@ -26,10 +53,9 @@ class Proxy {
 	}
 }
 
-class ResolvedProxy extends Proxy {
-	constructor(value) {
-		super(value);
-		this.state = states.resolved;
+class NancyProxyResolved extends NancyProxy {
+	constructor(value, trailingInvocations) {
+		super(states.resolved, value, trailingInvocations);
 	}
 
 	then(onFulfilled) {
@@ -41,10 +67,9 @@ class ResolvedProxy extends Proxy {
 	}
 }
 
-class RejectedProxy extends ResolvedProxy {
-	constructor(value) {
-		super(value);
-		this.state = states.rejected;
+class NancyProxyRejected extends NancyProxy {
+	constructor(value, trailingInvocations) {
+		super(value, states.rejected, trailingInvocations);
 	}
 
 	then(onFulfilled) {
@@ -58,33 +83,24 @@ class RejectedProxy extends ResolvedProxy {
 
 class Nancy {
 	constructor(executor) {
-		this.proxy = {
-			state: states.pending
-		};
-		const getCallback = state => value => {
-			if (value instanceof Nancy) {
-				debugger
-				value.then(value => {
-					this.proxy = new ResolvedProxy(value);
-				});
-				value.catch(value => {
-					this.proxy = new RejectedProxy(value);
-				});
-			} else if (state === states.resolved) {
-				this.proxy = new ResolvedProxy(value);				
-			} else if (state === states.rejected) {
-				this.proxy = new RejectedProxy(value);
-			} else {
-				this.proxy = new Proxy(value);
-				this.proxy.state = state;
-			}
+		this.proxy = new NancyProxyPending();
+		const resolve = value => {
+			debugger
+			const newProxy = this.proxy.toResolved(value);
 			this.proxy.runTrailingInvocations();
-		};
-
+			this.proxy = newProxy;
+		}
+		const reject = value => {
+			debugger
+			this.proxy = this.proxy.toRejected(value);
+			this.proxy.runTrailingInvocations();
+		}
 		try {
-			executor(getCallback(states.resolved), getCallback(states.rejected));
+			executor(resolve, reject);
 		} catch (error) {
-			getCallback(states.rejected)(error);
+			reject(error);
+			console.error('(in promise) error:')
+			console.error(error);
 		}
 	}
 
