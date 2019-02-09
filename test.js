@@ -1,6 +1,7 @@
 import test from 'ava';
 import {asyncCounter} from 'async-counter';
-import {Nancy, states} from '.';
+import {states} from '.';
+import {Nancy} from '.';
 
 test('empty executor results in a pending promise', t => {
 	const p = new Nancy(() => {});
@@ -19,12 +20,20 @@ test('simple reject works', t => {
 	t.is(p.value, 42);
 });
 
+const throwSomethingWrong = ()  => {
+	throw new Error('Something went wrong...');
+}
+
 test('error thrown during resolve execution results in a rejected promise', t => {
-	const p = new Nancy(() => {
-		throw new Error('Something went wrong...');
-	});
+	const p = new Nancy(throwSomethingWrong)
 	t.is(p.state, states.rejected);
 });
+
+// // Check test suite against native promise
+// const throwSomethingWrong = ()  => {
+// 	throw new Error('Something went wrong...');
+// }
+// const Nancy = Promise;
 
 test.cb('chain then sync', t => {
 	Nancy.resolve(0)
@@ -52,7 +61,9 @@ test.cb('chain catch sync', t => {
 		.then(() => Nancy.reject(24))
 		.then(() => anything)
 		.catch(value => t.is(value, 24))
-		.then(() => t.end());
+		.then(throwSomethingWrong)
+		.catch(throwSomethingWrong)
+		.catch(() => t.end())
 });
 
 const delay = () => new Nancy(resolve => setTimeout(resolve, 500));
@@ -67,12 +78,13 @@ test.cb('chain then async', t => {
 test.cb('chain catch async', t => {
 	delay()
 		.then(() => Nancy.reject())
-		.catch(() => Nancy.reject())
+		.catch(throwSomethingWrong)
 		.catch(() => 42)
 		.catch(anything)
 		.then(value => t.is(value, 42))
 		.then(delay)
-		.then(() => t.end());
+		.then(throwSomethingWrong)
+		.catch(() => t.end());
 });
 
 test.cb('multiple then on single promise', t => {

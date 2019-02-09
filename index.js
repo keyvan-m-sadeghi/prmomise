@@ -10,23 +10,23 @@ class Nancy {
 		const members = {
 			[states.resolved]: {
 				state: states.resolved,
-				then: onFulfilled => Nancy.resolve(onFulfilled(this.value)),
+				then: onResolved => Nancy.try(() => onResolved(this.value)),
 				catch: _ => this
 			},
 			[states.rejected]: {
 				state: states.rejected,
 				then: _ => this,
-				catch: onRejected => Nancy.resolve(onRejected(this.value))
+				catch: onRejected => Nancy.try(() => onRejected(this.value))
 			},
 			[states.pending]: {
 				state: states.pending,
-				then: onFulfilled => new Nancy(resolve => tailCalls.push({
-					[states.resolved]: () => resolve(onFulfilled(this.value)),
+				then: onResolved => new Nancy(resolve => tailCalls.push({
+					[states.resolved]: () => resolve(Nancy.try(() => onResolved(this.value))),
 					[states.rejected]: () => resolve(this)
 				})),
 				catch: onRejected => new Nancy(resolve => tailCalls.push({
 					[states.resolved]: () => resolve(this),
-					[states.rejected]: () => resolve(onRejected(this.value))
+					[states.rejected]: () => resolve(Nancy.try(() => onRejected(this.value)))
 				})),
 			}
 		};
@@ -65,6 +65,10 @@ class Nancy {
 
 	static reject(value) {
 		return new Nancy((resolve, reject) => reject(value));
+	}
+
+	static try(callback) {
+		return new Nancy(resolve => resolve(callback()));
 	}
 }
 
